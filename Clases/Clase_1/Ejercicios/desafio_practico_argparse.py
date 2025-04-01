@@ -10,5 +10,5 @@ def main():
     print('Archivo de entrada:', args.input)
     print('Archivo de salida:', args.output)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
