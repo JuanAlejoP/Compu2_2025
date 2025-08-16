@@ -2,8 +2,10 @@ import json
 import os
 from typing import List, Dict, Any
 
-
-BLOCKCHAIN_PATH = os.path.join("outputs", "blockchain.json")
+# base dir del proyecto (dos niveles arriba de este archivo: src/blockchain -> src -> project_root)
+MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(MODULE_DIR, "..", ".."))
+BLOCKCHAIN_PATH = os.path.join(PROJECT_ROOT, "outputs", "blockchain.json")
 
 
 def load_chain(path: str = BLOCKCHAIN_PATH) -> List[Dict[str, Any]]:
