@@ -1,28 +1,29 @@
+
 from collections import deque
 import numpy as np
 
-
 def run(pipe, out_queue):
-    """
-    Lee paquetes desde pipe, mantiene ventana móvil de 30 muestras sobre 'frecuencia',
-    calcula media y desviación y pone resultados en out_queue.
-    """
+    # Proceso analizador de frecuencia cardíaca
     print("Iniciando analizador de frecuencia...", flush=True)
+    # Ventana móvil para las últimas 30 muestras
     window = deque(maxlen=30)
 
     try:
         while True:
-            data = pipe.recv()  # bloqueante
+            # Recibir datos del pipe (bloqueante)
+            data = pipe.recv()
             if data is None:
                 break
 
+            # Extraer valor de frecuencia y agregar a la ventana
             value = data.get("frecuencia")
             window.append(value)
 
-            # calcular stats
+            # Calcular media y desviación estándar sobre la ventana
             media = float(np.mean(window)) if len(window) > 0 else 0.0
             desv = float(np.std(window)) if len(window) > 0 else 0.0
 
+            # Preparar resultado para el verificador
             result = {
                 "tipo": "frecuencia",
                 "timestamp": data.get("timestamp"),
@@ -30,14 +31,15 @@ def run(pipe, out_queue):
                 "desv": desv
             }
 
+            # Enviar resultado por la queue
             out_queue.put(result)
     except EOFError:
-        # pipe cerrado de manera abrupta
+        # Pipe cerrado abruptamente
         pass
     except Exception as e:
-        print(f"Frequency analyzer error: {e}", flush=True)
+        print(f"Error del analizador de frecuencia: {e}", flush=True)
     finally:
-        # enviar sentinel para indicar fin al verificador
+        # Enviar mensaje de fin al verificador
         try:
             out_queue.put({"tipo": "END"})
         except Exception:

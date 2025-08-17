@@ -2,22 +2,24 @@ import multiprocessing
 
 
 def main():
-    # Importar aquí para evitar import side-effects en spawn
+    # Importar acá para evitar import side-effects en spawn, por el método de multiprocessing
     from generator.simulator import run as run_generator
     from analyzers.frequency_analyzer import run as run_frequency
     from analyzers.oxygen_analyzer import run as run_oxygen
     from analyzers.pressure_analyzer import run as run_pressure
     from verifier.verifier import run as run_verifier
 
-    print("Iniciando análisis...", flush=True)
+    print("Iniciando análisis biométrico...", flush=True)
 
-    # Crear pipes: el generador usará los extremos 'parent' (escribe),
-    # los analizadores usarán los 'child' (leen).
+    # Crear pipes
+    # El generador usará los extremos 'parent' (escribe)
+    # Los analizadores usarán los 'child' (leen)
     frequency_parent, frequency_child = multiprocessing.Pipe()
     oxygen_parent, oxygen_child = multiprocessing.Pipe()
     pressure_parent, pressure_child = multiprocessing.Pipe()
 
-    # Crear colas para comunicacion Analizadores -> Verificador
+    # Crear colas para comunicar los analizadores con el verificador
+    # Estas colas permiten que los analizadores envíen datos al verificador
     frequency_queue = multiprocessing.Queue()
     oxygen_queue = multiprocessing.Queue()
     pressure_queue = multiprocessing.Queue()
@@ -29,22 +31,32 @@ def main():
         name="Verifier"
     )
 
+    # Procesos de análisis
+    # Cada uno recibe su extremo 'child' del pipe y su cola correspondiente
+    # para enviar datos al verificador
+
+    # Proceso de frecuencia
     frequency_proc = multiprocessing.Process(
         target=run_frequency,
         args=(frequency_child, frequency_queue),
         name="FrequencyAnalyzer"
     )
+    # Proceso de oxígeno
     oxygen_proc = multiprocessing.Process(
         target=run_oxygen,
         args=(oxygen_child, oxygen_queue),
         name="OxygenAnalyzer"
     )
+    # Proceso de presión
     pressure_proc = multiprocessing.Process(
         target=run_pressure,
         args=(pressure_child, pressure_queue),
         name="PressureAnalyzer"
     )
 
+    # Proceso generador que produce datos biométricos
+    # Este proceso escribe en los extremos 'parent' de los pipes
+    # y no necesita una cola, ya que no envía datos al verificador.
     generator_proc = multiprocessing.Process(
         target=run_generator,
         args=(frequency_parent, oxygen_parent, pressure_parent),
@@ -58,13 +70,13 @@ def main():
     pressure_proc.start()
     generator_proc.start()
 
-    # Esperar a que terminen (orden flexible, pero esperar a todos)
+    # Esperar a que terminen
     generator_proc.join()
     frequency_proc.join()
     oxygen_proc.join()
     pressure_proc.join()
 
-    # Las analyzers enviarán sentinels a sus queues. Esperar al verificador
+    # Las analizadores enviarán sentinels a sus queues. Esperar al verificador
     verifier_proc.join()
 
     # Cerrar/limpiar colas en el proceso padre

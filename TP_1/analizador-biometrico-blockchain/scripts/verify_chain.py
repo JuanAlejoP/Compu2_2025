@@ -1,40 +1,36 @@
-#!/usr/bin/env python3
-"""
-Verifica la integridad de outputs/blockchain.json recalculando hashes y prev_hash,
-informa bloques corruptos y genera outputs/reporte.txt con resumen estadístico.
 
-(El script asume la estructura del repo donde 'src' contiene los módulos).
-"""
+#!/usr/bin/env python3
+
+# Script para verificar la integridad de la blockchain y generar un reporte estadístico
 import os
 import sys
 from datetime import datetime
 from typing import List, Dict, Any
 
-# Añadir 'src' al path para poder importar los módulos del proyecto
-
-# Rutas absolutas para asegurar ubicación correcta de outputs y src
+# Determinar rutas absolutas para importar módulos del proyecto
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
+# Importar funciones para cargar la cadena y calcular hashes
 from blockchain.blockchain import load_chain, BLOCKCHAIN_PATH  # type: ignore
 from utils.hashing import compute_block_hash  # type: ignore
 
-# Siempre genera el reporte en analizador-biometrico-blockchain/outputs/report.txt
+# Ruta de salida para el reporte
 OUTPUT_REPORT = os.path.join(PROJECT_ROOT, "outputs", "report.txt")
 
 
 def verify_chain(chain: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Recorre la chain y verifica:
-      - si prev_hash coincide con el hash del bloque anterior
-      - si el hash almacenado coincide con el hash recalculado
-    Devuelve una lista de dicts con info sobre bloques corruptos (vacía si no hay).
+    Recorre la cadena y verifica:
+      - Que prev_hash coincida con el hash del bloque anterior
+      - Que el hash almacenado coincida con el hash recalculado
+    Devuelve una lista de dicts con información sobre bloques corruptos (vacía si no hay).
     """
     corrupt_blocks = []
-    expected_prev = "0" * 64
+    expected_prev = "0" * 64  # Hash inicial para el primer bloque
 
     for idx, block in enumerate(chain):
         ts = block.get("timestamp", "")
@@ -42,7 +38,7 @@ def verify_chain(chain: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         stored_prev = block.get("prev_hash", "")
         stored_hash = block.get("hash", "")
 
-        # Verificar prev_hash coincide con el esperado
+        # Verificar que prev_hash coincida con el esperado
         if stored_prev != expected_prev:
             corrupt_blocks.append({
                 "index": idx,
@@ -50,7 +46,7 @@ def verify_chain(chain: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "reason": f"prev_hash mismatch: expected {expected_prev}, got {stored_prev}"
             })
 
-        # Recalcular hash con la misma función usada en la creación
+        # Recalcular el hash y comparar
         recalculated = compute_block_hash(stored_prev, datos, ts)
         if recalculated != stored_hash:
             corrupt_blocks.append({
@@ -59,20 +55,12 @@ def verify_chain(chain: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "reason": f"hash mismatch: recalculated {recalculated}, stored {stored_hash}"
             })
 
-        # preparar expected_prev para la siguiente iteración
         expected_prev = stored_hash
 
     return corrupt_blocks
 
-
 def compute_report_stats(chain: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Calcula:
-      - total_blocks
-      - alerts_count
-      - average of medias: frecuencia, presion (sistólica), oxigeno
-    Retorna dict con esos valores (floats con 2 decimales).
-    """
+    # Calcula estadísticas globales de la cadena para el reporte
     total = len(chain)
     alerts = 0
     sum_freq = 0.0
@@ -108,9 +96,8 @@ def compute_report_stats(chain: List[Dict[str, Any]]) -> Dict[str, Any]:
         "avg_oxigeno": round(avg_oxy, 2)
     }
 
-
 def write_report(path: str, stats: Dict[str, Any], corrupts: List[Dict[str, Any]]) -> None:
-    """Escribe reporte humano en TXT en path (crea outputs/ si hace falta)."""
+    # Escribe el reporte final en un archivo de texto
     os.makedirs(os.path.dirname(path), exist_ok=True)
     now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     lines = []
@@ -126,7 +113,7 @@ def write_report(path: str, stats: Dict[str, Any], corrupts: List[Dict[str, Any]
     lines.append("")
 
     if corrupts:
-        lines.append("BLOQUES CORRUTOS DETECTADOS:")
+        lines.append("BLOQUES CORRUPTOS DETECTADOS:")
         for c in corrupts:
             idx = c.get("index")
             ts = c.get("timestamp")
@@ -140,24 +127,20 @@ def write_report(path: str, stats: Dict[str, Any], corrupts: List[Dict[str, Any]
 
 
 def main():
-    # Cargar cadena (usa BLOCKCHAIN_PATH por defecto)
+    # Punto de entrada principal del script de verificación y reporte
     chain = load_chain()
     if not chain:
         print("No se encontró blockchain.json o la cadena está vacía.", flush=True)
-        return  # Salir si no hay cadena
+        return
 
     print(f"Carga de cadena: {len(chain)} bloques.", flush=True)
 
-    # Verificar integridad
     corrupts = verify_chain(chain)
 
-    # Calcular estadísticas
     stats = compute_report_stats(chain)
 
-    # Escribir reporte
     write_report(OUTPUT_REPORT, stats, corrupts)
 
-    # Mostrar resumen en consola
     print(f"Reporte generado en {OUTPUT_REPORT}")
     if corrupts:
         print("¡ATENCIÓN! Se detectaron bloques corruptos:")

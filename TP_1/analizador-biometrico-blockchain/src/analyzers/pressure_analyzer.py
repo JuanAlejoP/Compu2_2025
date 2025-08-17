@@ -1,31 +1,33 @@
+
 from collections import deque
 import numpy as np
 
-
 def run(pipe, out_queue):
-    """
-    Analizador de presión: usa la componente sistólica (presion[0]) como señal.
-    """
+    # Proceso analizador de presión arterial (sistólica)
     print("Iniciando analizador de presión...", flush=True)
+    # Ventana móvil para las últimas 30 muestras
     window = deque(maxlen=30)
 
     try:
         while True:
+            # Recibir datos del pipe (bloqueante)
             data = pipe.recv()
             if data is None:
                 break
 
+            # Extraer valor de presión sistólica y agregar a la ventana
             pres = data.get("presion")
-            # tomar sistólica (index 0)
             value = pres[0] if pres and len(pres) >= 1 else None
             if value is None:
                 continue
 
             window.append(value)
 
+            # Calcular media y desviación estándar sobre la ventana
             media = float(np.mean(window)) if len(window) > 0 else 0.0
             desv = float(np.std(window)) if len(window) > 0 else 0.0
 
+            # Preparar resultado para el verificador
             result = {
                 "tipo": "presion",
                 "timestamp": data.get("timestamp"),
@@ -33,12 +35,15 @@ def run(pipe, out_queue):
                 "desv": desv
             }
 
+            # Enviar resultado por la queue
             out_queue.put(result)
     except EOFError:
+        # Pipe cerrado abruptamente
         pass
     except Exception as e:
-        print(f"Pressure analyzer error: {e}", flush=True)
+        print(f"Error del analizador de presión: {e}", flush=True)
     finally:
+        # Enviar mensaje de fin al verificador
         try:
             out_queue.put({"tipo": "END"})
         except Exception:

@@ -1,5 +1,4 @@
 import time
-import json
 import queue as pyqueue
 from typing import Dict, Any
 
@@ -8,34 +7,28 @@ from utils.hashing import compute_block_hash
 
 
 def run(freq_q, oxy_q, pres_q):
-    """
-    Verificador completo:
-    - Recibe resultados de las 3 queues.
-    - Espera 3 resultados por timestamp.
-    - Valida condiciones y marca alerta si corresponde.
-    - Construye bloque con prev_hash y hash y lo persiste en outputs/blockchain.json
-    - Muestra índice, hash y alerta por pantalla.
-    """
+    
+    # Proceso verificador: recibe resultados de los analizadores, valida y construye bloques
     print("Iniciando verificador...", flush=True)
 
-    # Cargar cadena existente si hubiera
+    # Cargar la cadena existente (si hay)
     chain = load_chain()
-    print(f"Loaded chain with {len(chain)} blocks.", flush=True)
+    print(f"Se encontró y cargó una cadena con {len(chain)} bloques.", flush=True)
 
-    # Buffer para agrupar por timestamp
+    # Buffer para agrupar resultados por timestamp
     buffer: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
-    # Control de sentinels (END) enviados por cada analyzer
+    # Control de finalización de los analizadores
     ends_needed = 3
     ends_received = 0
 
     try:
         while True:
-            # Si ya recibimos los 3 ENDs y no hay pendientes en buffer, terminamos
+            # Terminar si recibimos todos los END y el buffer está vacío
             if ends_received >= ends_needed and not buffer:
                 break
 
-            # Intentamos leer de cada queue con timeout corto
+            # Leer de la queue de frecuencia
             try:
                 item = freq_q.get(timeout=0.5)
             except pyqueue.Empty:
@@ -49,6 +42,7 @@ def run(freq_q, oxy_q, pres_q):
                     buffer.setdefault(ts, {})
                     buffer[ts]["frecuencia"] = {"media": item["media"], "desv": item["desv"]}
 
+            # Leer de la queue de oxígeno
             try:
                 item = oxy_q.get(timeout=0.5)
             except pyqueue.Empty:
@@ -62,6 +56,7 @@ def run(freq_q, oxy_q, pres_q):
                     buffer.setdefault(ts, {})
                     buffer[ts]["oxigeno"] = {"media": item["media"], "desv": item["desv"]}
 
+            # Leer de la queue de presión
             try:
                 item = pres_q.get(timeout=0.5)
             except pyqueue.Empty:
@@ -75,16 +70,17 @@ def run(freq_q, oxy_q, pres_q):
                     buffer.setdefault(ts, {})
                     buffer[ts]["presion"] = {"media": item["media"], "desv": item["desv"]}
 
-            # Buscar timestamps completos en buffer
+            # Buscar timestamps completos (con los 3 resultados)
             completed = [ts for ts, d in buffer.items() if all(k in d for k in ("frecuencia", "presion", "oxigeno"))]
             for ts in sorted(completed):
+                # Construir datos del bloque
                 datos = {
                     "frecuencia": buffer[ts]["frecuencia"],
                     "presion": buffer[ts]["presion"],
                     "oxigeno": buffer[ts]["oxigeno"],
                 }
 
-                # Validaciones (usar medias)
+                # Validar condiciones de alerta
                 alerta = False
                 try:
                     if datos["frecuencia"]["media"] >= 200:
@@ -94,9 +90,9 @@ def run(freq_q, oxy_q, pres_q):
                     if datos["presion"]["media"] >= 200:
                         alerta = True
                 except Exception:
-                    # Si faltan datos por alguna razón, consideramos alerta conservadora
                     alerta = True
 
+                # Calcular hashes y construir bloque
                 prev_hash = chain[-1]["hash"] if chain else "0" * 64
                 block_hash = compute_block_hash(prev_hash, datos, ts)
 
@@ -108,25 +104,25 @@ def run(freq_q, oxy_q, pres_q):
                     "hash": block_hash
                 }
 
+                # Guardar bloque en la cadena y persistir
                 chain.append(block)
-                # Persistir inmediatamente la cadena actualizada
                 save_chain(chain)
 
                 index = len(chain) - 1
                 print(f"Block {index} | hash: {block_hash} | alerta: {alerta}", flush=True)
 
-                # Borrar del buffer
+                # Eliminar del buffer
                 del buffer[ts]
 
-            # Pequeña espera para evitar bucle ocupante si no hubo actividad
+            # Pequeña espera para evitar bucle ocupado
             time.sleep(0.01)
 
     except KeyboardInterrupt:
         print("Verificador interrumpido por usuario", flush=True)
     except Exception as e:
-        print(f"Verificador error inesperado: {e}", flush=True)
+        print(f"Error inesperado del verificador: {e}", flush=True)
 
-    # Final: imprimir resumen
+    # Resumen final
     total_blocks = len(chain)
     alerts = sum(1 for b in chain if b.get("alerta"))
     print(f"Verificador finalizado. Bloques totales: {total_blocks}, con alertas: {alerts}", flush=True)
