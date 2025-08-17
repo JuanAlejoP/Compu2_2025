@@ -1,0 +1,11 @@
+Reporte generado: 2025-08-17T16:38:18
+
+Total de bloques: 60
+Bloques con alertas: 0
+
+Promedios (medias almacenadas en bloques):
+- Frecuencia promedio: 114.32
+- Presión (sistólica) promedio: 150.21
+- Oxígeno promedio: 94.88
+
+No se detectaron bloques corruptos. La cadena es válida.
