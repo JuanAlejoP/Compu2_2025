@@ -20,20 +20,20 @@ def run(frequency_pipe, oxygen_pipe, pressure_pipe):
             Comentar si se desea usar datos aleatorios normales.
             '''
             # Fuerza valores fuera de rango en las primeras 3 muestras
-            if i < 3:
-                freq = 220  # fuera de rango
-                oxi = 85    # fuera de rango
-                pres = [210, 80]  # fuera de rango
-            else:
-                freq = random.randint(60, 180)
-                oxi = random.randint(90, 100)
-                pres = [random.randint(110, 180), random.randint(70, 110)]
-            packet = {
-                "timestamp": timestamp,
-                "frecuencia": freq,
-                "presion": pres,
-                "oxigeno": oxi
-            }
+            # if i < 3:
+            #     freq = 220  # fuera de rango
+            #     oxi = 85    # fuera de rango
+            #     pres = [210, 80]  # fuera de rango
+            # else:
+            #     freq = random.randint(60, 180)
+            #     oxi = random.randint(90, 100)
+            #     pres = [random.randint(110, 180), random.randint(70, 110)]
+            # packet = {
+            #     "timestamp": timestamp,
+            #     "frecuencia": freq,
+            #     "presion": pres,
+            #     "oxigeno": oxi
+            # }
 
             '''
             Este es el bloque original que genera datos aleatorios dentro de rangos normales.
@@ -41,12 +41,12 @@ def run(frequency_pipe, oxygen_pipe, pressure_pipe):
             Descomentar si se desea usar datos aleatorios normales.
             '''
             # Crear paquete de datos simulados
-            # packet = {
-            #     "timestamp": timestamp,
-            #     "frecuencia": random.randint(60, 180),
-            #     "presion": [random.randint(110, 180), random.randint(70, 110)],
-            #     "oxigeno": random.randint(90, 100)
-            # }
+            packet = {
+                "timestamp": timestamp,
+                "frecuencia": random.randint(60, 180),
+                "presion": [random.randint(110, 180), random.randint(70, 110)],
+                "oxigeno": random.randint(90, 100)
+            }
 
 
             # Enviar el paquete a cada analizador por su pipe correspondiente

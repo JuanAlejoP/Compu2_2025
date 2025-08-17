@@ -1,13 +1,11 @@
-Reporte generado: 2025-08-17T16:33:23
+Reporte generado: 2025-08-17T16:38:18
 
 Total de bloques: 60
-Bloques con alertas: 7
+Bloques con alertas: 0
 
 Promedios (medias almacenadas en bloques):
-- Frecuencia promedio: 135.31
-- Presión (sistólica) promedio: 153.7
-- Oxígeno promedio: 93.26
+- Frecuencia promedio: 114.32
+- Presión (sistólica) promedio: 150.21
+- Oxígeno promedio: 94.88
 
-BLOQUES CORRUPTOS DETECTADOS:
-- Bloque 0 (timestamp=2025-08-17T15:02:34): hash mismatch: recalculated c97d74ce10ad2c43d3cf6095738cad41177d91389ddebc14958e708e1a8c9316, stored c97d74ce10ad2c43d3cf6095738pad41177d91389ddebc14958e708e1a8c9316
-- Bloque 1 (timestamp=2025-08-17T15:02:35): prev_hash mismatch: expected c97d74ce10ad2c43d3cf6095738pad41177d91389ddebc14958e708e1a8c9316, got c97d74ce10ad2c43d3cf6095738cad41177d91389ddebc14958e708e1a8c9316
+No se detectaron bloques corruptos. La cadena es válida.
