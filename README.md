@@ -2,9 +2,9 @@
 
 ## 👤 Estudiante
 **Nombre:** Juan Alejo Patiño
-**Carrera:** Ingeniería Informática  
+**Carrera:** Ingeniería Informática
 
-## 🎯 Expectativas sobre la materia  
+## 🎯 Expectativas sobre la materia
 No tengo expectativas particulares, pero espero mejorar mis habilidades con diferentes herramientas y software.
 
 ## 💻 Intereses en programación
