@@ -1,6 +1,6 @@
-
 from collections import deque
 import numpy as np
+
 
 def run(pipe, out_queue):
     # Proceso analizador de presión arterial (sistólica)

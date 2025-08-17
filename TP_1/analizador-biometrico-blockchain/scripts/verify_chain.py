@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 
 # Script para verificar la integridad de la blockchain y generar un reporte estadístico
