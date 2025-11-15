@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env/
+.venv/
+venv/
+ENV/
+*.egg-info/
+*.egg
+
+# Logs
+*.log
+run_logs/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Selenium/Chrome
+chromedriver.log
+
+# Misc
+*.sqlite3
+*.db
+*.bak
+*.swp
+*.tmp
+
+# VSCode
+.vscode/
+
+# Test output
+htmlcov/
+.coverage
+coverage.xml
+
+# Client output
+client_output.json
